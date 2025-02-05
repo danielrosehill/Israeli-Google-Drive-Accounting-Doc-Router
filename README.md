@@ -57,15 +57,17 @@ You can use the Folder Structure Creation utility in order to build the folders 
 
 Or you can populate folders with the following structure:
 
-📁 Root
-├── 📁 2024
-│   ├── 📁 01_Jan
-│   ├── 📁 02_Feb
-│   └── 📁 03_Mar
-│
-└── 📁 2025
-    ├── 📁 01_Jan
-    ├── 📁 02_Feb
+### Expected Folder Structure For Accounting Folders
+
+📁 Root  
+├── 📁 2024  
+│   ├── 📁 01_Jan  
+│   ├── 📁 02_Feb  
+│   └── 📁 03_Mar  
+│ 
+└── 📁 2025  
+    ├── 📁 01_Jan  
+    ├── 📁 02_Feb  
     └── 📁 03_Mar
 
 
