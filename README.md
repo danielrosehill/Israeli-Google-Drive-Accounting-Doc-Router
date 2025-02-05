@@ -22,6 +22,8 @@ The user has the ability to rename the files to make them more descriptive. And 
 
 The confirmation message displays a file path and the file should be routed according to the logic integrated into the app.
 
+For full setup instructions, [see this blog](https://heyitworks.tech/google-drive-accounting-doc-router-for-israeli-freelancers-apps-script).
+
 ## How To Use
 
 - In Google Drive, create a new Google Apps script
