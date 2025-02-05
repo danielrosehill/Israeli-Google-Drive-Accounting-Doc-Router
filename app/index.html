@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <base target="_top">
+  <meta charset="UTF-8">
+  <title>Google Drive Accounting File Router</title>
+  <style>
+    @keyframes slideUp {
+      from {
+        transform: translateY(100%);
+        opacity: 0;
+      }
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes slideDown {
+      from {
+        transform: translateY(0);
+        opacity: 1;
+      }
+      to {
+        transform: translateY(100%);
+        opacity: 0;
+      }
+    }
+
+    .israeli-animation {
+      animation: slideUp 0.5s ease forwards;
+    }
+
+    .israeli-animation-exit {
+      animation: slideDown 0.5s ease forwards;
+    }
+
+    /* Tab Styles */
+    .tabs {
+      display: flex;
+      margin-bottom: 20px;
+      border-bottom: 2px solid #ddd;
+    }
+    .tab {
+      padding: 10px 20px;
+      cursor: pointer;
+      border: none;
+      background: none;
+      font-weight: bold;
+      color: #666;
+    }
+    .tab.active {
+      color: #4285f4;
+      border-bottom: 2px solid #4285f4;
+      margin-bottom: -2px;
+    }
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+    /* Config Styles */
+    .config-group {
+      margin-bottom: 15px;
+    }
+    .config-group input {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    .help-text {
+      display: block;
+      margin-top: 4px;
+      color: #666;
+      font-size: 0.9em;
+    }
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 20px auto;
+      padding: 20px;
+      background-color: #f5f5f5;
+    }
+    .container {
+      background-color: white;
+      padding: 20px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+    }
+    select {
+      width: 100%;
+      padding: 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      margin-bottom: 16px;
+    }
+    .file-list {
+      border: 2px dashed #ddd;
+      border-radius: 4px;
+      padding: 10px;
+      margin-bottom: 16px;
+      min-height: 150px;
+      max-height: 300px;
+      overflow-y: auto;
+      transition: all 0.3s ease;
+      background-color: #fff;
+      position: relative;
+    }
+    .file-list.drag-over {
+      border-color: #4285f4;
+      background-color: #f8f9fa;
+    }
+    .drop-message {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: #666;
+      font-size: 1.1em;
+      text-align: center;
+      pointer-events: none;
+    }
+    .file-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 8px;
+      border-bottom: 1px solid #eee;
+    }
+    .file-item:last-child {
+      border-bottom: none;
+    }
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 20px;
+    }
+    button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    .upload-btn {
+      background-color: #4285f4;
+      color: white;
+    }
+    .clear-btn {
+      background-color: #dc3545;
+      color: white;
+    }
+    .status {
+      margin-top: 20px;
+      padding: 10px;
+      border-radius: 4px;
+      display: none;
+    }
+    .success {
+      background-color: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .error {
+      background-color: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    .loading {
+      display: none;
+      text-align: center;
+      margin: 20px 0;
+    }
+    .checkbox-label {
+      display: inline-flex;
+      align-items: center;
+      margin: 0;
+      gap: 5px;
+      font-weight: normal;
+    }
+    .file-rename {
+      width: 100%;
+      padding: 4px;
+      margin-bottom: 4px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+    }
+    .file-original {
+      color: #666;
+      font-size: 0.8em;
+      margin-bottom: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Google Drive Accounting File Router</h1>
+    <h2 style="color: #666; margin: 0 0 15px 0;">Routes accounting documents in Google Drive</h2>
+    <div id="currentMonth" style="color: #666; margin-bottom: 15px; display: flex; align-items: center; gap: 10px;">
+      <span></span>
+      <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAALCAYAAAB24g05AAAAxUlEQVQoU2P8//8/AyUAIwUGwA2orKxk/P//P8PmzZvRvQszYAEQnwBiZSB+D8SbgPgMEP8F4t1AvBiIQWwUgGKAGxCvBeI/QCwAxIeB+BUQGwAxyIA9QCwOxMgGIGvGMOA/EDsC8WMg/gTEpkD8GIjPArEFEIMM2QTESkCMzQCQpBUQPwBiEH8BEL8BYgMgBhmyE4jFgBjDAJBkHhDfAmKQQisg/gDEukAMMmQDECsCMU4DQAoSgfg6EIMM+QvEq4AYJM6AAgAp8kAx/Db8YAAAAABJRU5ErkJggg==" alt="Israeli Flag" style="width: 24px; height: 24px;">
+    </div>
+
+    <div class="tabs">
+      <button class="tab active" onclick="showTab('upload')">Upload Files</button>
+      <button class="tab" onclick="showTab('config')">Configuration</button>
+      <button class="tab" onclick="showTab('howto')">How To Use</button>
+      <button class="tab" onclick="showTab('create')">Create Folders</button>
+    </div>
+
+    <!-- Upload Tab -->
+    <div id="uploadTab" class="tab-content active">
+      <div class="form-group">
+        <label for="folderType">Select Document Type:</label>
+        <select id="folderType">
+          <option value="">Please select...</option>
+          <option value="EXPENSE">Expense</option>
+          <option value="INVOICES">Invoice</option>
+          <option value="RECEIPTS">Receipt</option>
+        </select>
+
+        <label for="monthOverride">Target Month:</label>
+        <select id="monthOverride">
+          <option value="">Current Month</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>Select Files (up to 10):</label>
+        <input type="file" id="files" multiple accept="application/pdf,image/*,.doc,.docx,.xls,.xlsx" style="display: none;">
+        <button onclick="document.getElementById('files').click()" class="upload-btn">Choose Files</button>
+      </div>
+
+      <div class="file-list" id="fileList" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+        <div class="drop-message">
+          Drag and drop files here<br>
+          <small>or use the Choose Files button</small>
+        </div>
+        <div id="fileListContent"></div>
+      </div>
+
+      <div class="button-group">
+        <button onclick="processFiles()" class="upload-btn">Upload Files</button>
+        <button onclick="clearAll()" class="clear-btn">Clear All</button>
+      </div>
+
+      <div class="loading" id="loading">
+        Processing files... Please wait...
+      </div>
+
+      <div id="statusImage" style="text-align: center; margin: 20px 0;">
+        <img src="https://res.cloudinary.com/domtm8wiy/image/upload/v1738782120/accounting-router/otidlvt8pofbzcpknbc6.png" alt="Status" style="max-width: 200px;">
+      </div>
+
+      <div class="status" id="status"></div>
+    </div>
+
+    <!-- Config Tab -->
+    <div id="configTab" class="tab-content">
+      <h2>Folder Configuration</h2>
+      <p>Configure the Google Drive folders for each document type. You can paste the full folder URL or just the folder ID.</p>
+      
+      <div class="config-group">
+        <label for="expenseFolder">Expense Folder:</label>
+        <input type="text" id="expenseFolder" placeholder="Paste folder URL or ID" onchange="handleFolderInput(this)">
+        <small class="help-text">Example: https://drive.google.com/drive/folders/YOUR_FOLDER_ID</small>
+      </div>
+      
+      <div class="config-group">
+        <label for="invoicesFolder">Invoices Folder:</label>
+        <input type="text" id="invoicesFolder" placeholder="Paste folder URL or ID" onchange="handleFolderInput(this)">
+        <small class="help-text">Example: https://drive.google.com/drive/folders/YOUR_FOLDER_ID</small>
+      </div>
+      
+      <div class="config-group">
+        <label for="receiptsFolder">Receipts Folder:</label>
+        <input type="text" id="receiptsFolder" placeholder="Paste folder URL or ID" onchange="handleFolderInput(this)">
+        <small class="help-text">Example: https://drive.google.com/drive/folders/YOUR_FOLDER_ID</small>
+      </div>
+      
+      <button onclick="saveConfig()" class="upload-btn">Save Configuration</button>
+      <div class="status" id="configStatus"></div>
+    </div>
+
+    <!-- How To Use Tab -->
+    <div id="howtoTab" class="tab-content">
+      <h2>How To Use</h2>
+      <div style="line-height: 1.6">
+        <p style="margin-bottom: 20px;">This app was developed by Daniel Rosehill (danielrosehill.com) using Claude Sonnet 3.5 & Cline.</p>
+        
+        <h3>Setup</h3>
+        <ol>
+          <li>Go to the Configuration tab and set up your folder IDs for each document type.</li>
+          <li>Use the Create Folders tab to create the initial folder structure if needed.</li>
+        </ol>
+
+        <h3>Uploading Files</h3>
+        <ol>
+          <li>Select the document type (Expense, Invoice, or Receipt).</li>
+          <li>Choose files using the button or drag and drop them into the designated area.</li>
+          <li>Optionally rename files before uploading.</li>
+          <li>For Israeli documents, check the "Israeli" checkbox next to the file.</li>
+          <li>Click "Upload Files" to process the documents.</li>
+        </ol>
+
+        <h3>Folder Structure</h3>
+        <p>Files are automatically organized in the following structure:</p>
+        <pre style="background: #f5f5f5; padding: 10px; border-radius: 4px;">
+Root Folder (Expense/Invoices/Receipts)
+└── Year (e.g., 2024)
+    └── Month (e.g., 01_Jan)
+        ├── Regular files
+        └── Israeli (folder for Israeli documents)
+        </pre>
+      </div>
+    </div>
+
+    <!-- Create Folders Tab -->
+    <div id="createTab" class="tab-content">
+      <h2>Create Folder Structure</h2>
+      <p>Use this section to create the initial folder structure for your documents. This will create the year and month folders according to the current date.</p>
+      
+      <div class="form-group">
+        <label>Select folder types to create:</label>
+        <div style="margin: 10px 0;">
+          <label class="checkbox-label">
+            <input type="checkbox" id="createExpense" checked> Expense Folders
+          </label>
+        </div>
+        <div style="margin: 10px 0;">
+          <label class="checkbox-label">
+            <input type="checkbox" id="createInvoices" checked> Invoice Folders
+          </label>
+        </div>
+        <div style="margin: 10px 0;">
+          <label class="checkbox-label">
+            <input type="checkbox" id="createReceipts" checked> Receipt Folders
+          </label>
+        </div>
+      </div>
+      
+      <button onclick="createFolderStructure()" class="upload-btn">Create Folders</button>
+    </div>
+  </div>
+
+  <script>
+    const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+    
+    function updateStatusImage(state) {
+      const statusImage = document.getElementById('statusImage').querySelector('img');
+      switch(state) {
+        case 'ready':
+          statusImage.src = 'https://res.cloudinary.com/domtm8wiy/image/upload/v1738782120/accounting-router/otidlvt8pofbzcpknbc6.png';
+          break;
+        case 'uploading':
+          statusImage.src = 'https://res.cloudinary.com/domtm8wiy/image/upload/v1738782120/accounting-router/lvameumllsc7lny3pddj.png';
+          break;
+        case 'saved':
+          statusImage.src = 'https://res.cloudinary.com/domtm8wiy/image/upload/v1738782120/accounting-router/izle2zu9xgfkmkskmv2r.png';
+          break;
+        case 'israeli':
+          const img = statusImage;
+          img.src = 'https://res.cloudinary.com/domtm8wiy/image/upload/v1738782120/accounting-router/yiw6yhd5r6oc4icka3ad.png';
+          img.classList.add('israeli-animation');
+          setTimeout(() => {
+            img.classList.add('israeli-animation-exit');
+            setTimeout(() => {
+              img.classList.remove('israeli-animation', 'israeli-animation-exit');
+              updateStatusImage('ready');
+            }, 3000);
+          }, 500);
+          break;
+      }
+    }
+
+    function populateMonthsDropdown() {
+      const monthSelect = document.getElementById('monthOverride');
+      const now = new Date();
+      const currentYear = now.getFullYear();
+      
+      // Add past 12 months as options
+      for (let i = 0; i < 12; i++) {
+        const date = new Date(currentYear, now.getMonth() - i, 1);
+        const monthNum = String(date.getMonth() + 1).padStart(2, '0');
+        const monthName = months[date.getMonth()];
+        const year = date.getFullYear();
+        const value = `${year}-${monthNum}`;
+        const text = `${monthNum}_${monthName} ${year}`;
+        
+        const option = new Option(text, value);
+        monthSelect.add(option);
+      }
+    }
+
+    window.onload = function() {
+      // Display current accounting month and populate months dropdown
+      populateMonthsDropdown();
+      const now = new Date();
+      document.getElementById('currentMonth').querySelector('span').textContent = `Current Accounting Month: ${String(now.getMonth() + 1).padStart(2, '0')}_${months[now.getMonth()]} ${now.getFullYear()}`;
+      
+      // First try to load from localStorage for immediate display
+      const localConfig = JSON.parse(localStorage.getItem('accountingRouterConfig') || '{}');
+      document.getElementById('expenseFolder').value = localConfig.EXPENSE || '';
+      document.getElementById('invoicesFolder').value = localConfig.INVOICES || '';
+      document.getElementById('receiptsFolder').value = localConfig.RECEIPTS || '';
+      
+      // Then load from server-side storage which is the source of truth
+      google.script.run
+        .withSuccessHandler(config => {
+          if (config) {
+            document.getElementById('expenseFolder').value = config.EXPENSE || '';
+            document.getElementById('invoicesFolder').value = config.INVOICES || '';
+            document.getElementById('receiptsFolder').value = config.RECEIPTS || '';
+            // Update localStorage to match server state
+            localStorage.setItem('accountingRouterConfig', JSON.stringify(config));
+          }
+        })
+        .getConfiguration();
+
+      // Set initial status image
+      updateStatusImage('ready');
+    };
+
+    function extractFolderId(input) {
+      // Handle various Google Drive URL formats
+      const patterns = [
+        /\/folders\/([a-zA-Z0-9_-]+)(?:\/|\?|$)/,  // /folders/ID format
+        /id=([a-zA-Z0-9_-]+)(?:&|$)/,              // id=ID format
+        /^([a-zA-Z0-9_-]+)$/                       // Direct ID format
+      ];
+
+      for (const pattern of patterns) {
+        const match = input.match(pattern);
+        if (match) return match[1];
+      }
+
+      return input; // Return original input if no pattern matches
+    }
+
+    function handleFolderInput(input) {
+      const value = input.value.trim();
+      if (value) {
+        const folderId = extractFolderId(value);
+        input.value = folderId;
+      }
+    }
+
+    function showTab(tabName) {
+      // Hide all tabs
+      document.querySelectorAll('.tab-content').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      document.querySelectorAll('.tab').forEach(tab => {
+        tab.classList.remove('active');
+      });
+      
+      // Show selected tab
+      document.getElementById(tabName + 'Tab').classList.add('active');
+      document.querySelector(`.tab[onclick="showTab('${tabName}')"]`).classList.add('active');
+    }
+
+    function saveConfig() {
+      const config = {
+        EXPENSE: document.getElementById('expenseFolder').value,
+        INVOICES: document.getElementById('invoicesFolder').value,
+        RECEIPTS: document.getElementById('receiptsFolder').value
+      };
+      
+      localStorage.setItem('accountingRouterConfig', JSON.stringify(config));
+      
+      const statusDiv = document.getElementById('configStatus');
+      statusDiv.className = 'status success';
+      statusDiv.style.display = 'block';
+      statusDiv.innerHTML = 'Saving configuration...';
+      
+      // Sync with Google Apps Script properties
+      google.script.run
+        .withSuccessHandler(() => {
+          statusDiv.innerHTML = 'Configuration saved successfully! ✓';
+          setTimeout(() => {
+            statusDiv.style.display = 'none';
+          }, 3000);
+        })
+        .withFailureHandler(error => {
+          statusDiv.className = 'status error';
+          statusDiv.innerHTML = 'Error saving configuration: ' + error.message;
+        })
+        .saveConfiguration(config);
+    }
+
+    function createFolderStructure() {
+      const config = JSON.parse(localStorage.getItem('accountingRouterConfig') || '{}');
+      const folderTypes = [];
+      
+      if (document.getElementById('createExpense').checked) folderTypes.push('EXPENSE');
+      if (document.getElementById('createInvoices').checked) folderTypes.push('INVOICES');
+      if (document.getElementById('createReceipts').checked) folderTypes.push('RECEIPTS');
+      
+      if (folderTypes.length === 0) {
+        showStatus('Please select at least one folder type.', true);
+        return;
+      }
+
+      document.getElementById('loading').style.display = 'block';
+      
+      google.script.run
+        .withSuccessHandler(response => {
+          document.getElementById('loading').style.display = 'none';
+          showStatus(response.message, !response.success);
+        })
+        .withFailureHandler(error => {
+          document.getElementById('loading').style.display = 'none';
+          showStatus('Error creating folders: ' + error.message, true);
+        })
+        .createFolderStructure(folderTypes);
+    }
+
+    let selectedFiles = [];
+
+    document.getElementById('files').addEventListener('change', function(e) {
+      const files = Array.from(e.target.files).map(file => ({
+        file,
+        isIsraeli: false,
+        newName: file.name
+      }));
+      
+      if (files.length > 10) {
+        alert('Please select up to 10 files only.');
+        return;
+      }
+      
+      selectedFiles = files;
+      updateFileList();
+    });
+
+    function toggleIsraeli(index) {
+      selectedFiles[index].isIsraeli = !selectedFiles[index].isIsraeli;
+      if (selectedFiles[index].isIsraeli) {
+        updateStatusImage('israeli');
+        setTimeout(() => updateStatusImage('ready'), 1000);
+      }
+      updateFileList();
+    }
+
+    function updateFileName(index, newName) {
+      selectedFiles[index].newName = newName;
+    }
+
+    function handleDragOver(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      document.getElementById('fileList').classList.add('drag-over');
+    }
+
+    function handleDragLeave(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      document.getElementById('fileList').classList.remove('drag-over');
+    }
+
+    function handleDrop(event) {
+      event.preventDefault();
+      event.stopPropagation();
+      
+      const fileList = document.getElementById('fileList');
+      fileList.classList.remove('drag-over');
+      
+      const droppedFiles = Array.from(event.dataTransfer.files).map(file => ({
+        file,
+        isIsraeli: false,
+        newName: file.name
+      }));
+
+      if (selectedFiles.length + droppedFiles.length > 10) {
+        alert('Total number of files cannot exceed 10.');
+        return;
+      }
+
+      selectedFiles = [...selectedFiles, ...droppedFiles];
+      updateFileList();
+    }
+
+    function updateFileList() {
+      const fileListContent = document.getElementById('fileListContent');
+      if (selectedFiles.length === 0) {
+        fileListContent.innerHTML = '';
+        return;
+      }
+
+      fileListContent.innerHTML = selectedFiles.map((fileObj, index) => `
+        <div class="file-item">
+          <div style="flex: 1;">
+            <input type="text" 
+                   class="file-rename"
+                   value="${fileObj.newName}"
+                   onchange="updateFileName(${index}, this.value)"
+                   placeholder="Enter new filename">
+            <div class="file-original">Original: ${fileObj.file.name}</div>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px; margin-left: 10px;">
+            <label class="checkbox-label">
+              <input type="checkbox" 
+                     onchange="toggleIsraeli(${index})" 
+                     ${fileObj.isIsraeli ? 'checked' : ''}>
+              Israeli
+            </label>
+            <button onclick="removeFile(${index})" style="color: red; background: none; border: none;">×</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function removeFile(index) {
+      selectedFiles.splice(index, 1);
+      updateFileList();
+    }
+
+    function clearAll() {
+      selectedFiles = [];
+      document.getElementById('folderType').value = '';
+      document.getElementById('files').value = '';
+      document.getElementById('status').style.display = 'none';
+      updateStatusImage('ready');
+      updateFileList();
+    }
+
+    function showStatus(message, isError = false) {
+      const status = document.getElementById('status');
+      status.className = 'status ' + (isError ? 'error' : 'success');
+      status.style.display = 'block';
+      status.innerHTML = message;
+      if (!isError) {
+        setTimeout(() => {
+          status.style.display = 'none';
+        }, 5000);
+      }
+    }
+
+    function processFiles() {
+      const folderType = document.getElementById('folderType').value;
+      
+      if (!folderType) {
+        showStatus('Please select a document type.', true);
+        return;
+      }
+
+      if (selectedFiles.length === 0) {
+        showStatus('Please select at least one file.', true);
+        return;
+      }
+
+      document.getElementById('loading').style.display = 'block';
+      showStatus('Preparing to upload files...', false);
+      updateStatusImage('uploading');
+      
+      // Create an array of promises for each file
+      const promises = selectedFiles.map(fileObj => {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = (e) => {
+            resolve({
+              fileName: fileObj.newName,
+              mimeType: fileObj.file.type,
+              bytes: e.target.result.split(',')[1],
+              isIsraeli: fileObj.isIsraeli
+            });
+          };
+          reader.onerror = (e) => reject(e);
+          reader.readAsDataURL(fileObj.file);
+        });
+      });
+
+      // Process all files
+      Promise.all(promises)
+        .then(fileObjects => {
+          const monthOverride = document.getElementById('monthOverride').value;
+          showStatus('Uploading files to Google Drive...', false);
+          google.script.run
+            .withSuccessHandler(response => {
+              document.getElementById('loading').style.display = 'none';
+              if (response.success) {
+                let message = response.message + '<br><br>Files processed:';
+                response.results.forEach(result => {
+                  message += `<br>• ${result.name} - <a href="${result.url}" target="_blank">View file</a>`;
+                });
+                showStatus(message);
+                updateStatusImage('saved');
+                setTimeout(() => {
+                  clearAll();
+                  updateStatusImage('ready');
+                }, 3000);
+              } else {
+                showStatus(response.message, true);
+                updateStatusImage('ready');
+              }
+            })
+            .withFailureHandler(error => {
+              document.getElementById('loading').style.display = 'none';
+              showStatus('Error processing files: ' + error.message, true);
+              updateStatusImage('ready');
+            })
+            .processFiles(fileObjects, folderType, monthOverride);
+        })
+        .catch(error => {
+          document.getElementById('loading').style.display = 'none';
+          showStatus('Error preparing files: ' + error.message, true);
+          updateStatusImage('ready');
+        });
+    }
+  </script>
+</body>
+</html>
